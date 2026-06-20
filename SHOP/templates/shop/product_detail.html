@@ -1,6 +1,10 @@
 <h1>{{ product.name }}</h1>
 
-<img src="{{ product.product_image.url }}" width="300">
+{% if product.product_image %}
+    <img src="{{ product.product_image.url }}" width="300">
+{% else %}
+    <p>Фото отсутствует</p>
+{% endif %}
 
 <p>{{ product.description }}</p>
 <p>Цена: {{ product.price }} BYN</p>
