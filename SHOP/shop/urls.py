@@ -27,5 +27,7 @@ urlpatterns = [
     
     path('checkout/', views.checkout, name='checkout'),
     
+    path('api/cart/add/', views.api_add_to_cart, name='api_add_to_cart'),
+    
     path('api/', include(router.urls)),
 ]
