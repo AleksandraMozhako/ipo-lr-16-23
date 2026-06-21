@@ -33,4 +33,10 @@
 
 <h3>Общая стоимость: {{ total_price }}</h3>
 
+{% if items %}
+    <p>
+        <a href="{% url 'checkout' %}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Оформить заказ</a>
+    </p>
+{% endif %}
+
 <a href="/catalog/">Продолжить покупки</a>

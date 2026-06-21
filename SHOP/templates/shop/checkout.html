@@ -1,0 +1,55 @@
+<h1>Оформление заказа</h1>
+
+{% if messages %}
+    {% for message in messages %}
+        <p style="color: {% if message.tags == 'error' %}red{% else %}green{% endif %};">{{ message }}</p>
+    {% endfor %}
+{% endif %}
+
+<h2>Состав заказа</h2>
+
+<table border="1" style="border-collapse: collapse; width: 100%;">
+    <tr style="background-color: #4CAF50; color: white;">
+        <th style="padding: 10px;">Товар</th>
+        <th style="padding: 10px;">Количество</th>
+        <th style="padding: 10px;">Цена</th>
+        <th style="padding: 10px;">Сумма</th>
+    </tr>
+    {% for item in items %}
+    <tr>
+        <td style="padding: 8px;">{{ item.product.name }}</td>
+        <td style="padding: 8px;">{{ item.quantity }}</td>
+        <td style="padding: 8px;">{{ item.product.price }} BYN</td>
+        <td style="padding: 8px;">{{ item.total_price }} BYN</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h3>Итого: {{ total_price }} BYN</h3>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <p>
+        <label for="email"><strong>Email для отправки чека:</strong></label><br>
+        <input type="email" id="email" name="email" value="{{ default_email }}" required 
+               style="width: 100%; padding: 8px; margin-top: 5px;">
+    </p>
+    
+    <p>
+        <label for="shipping_address"><strong>Адрес доставки:</strong></label><br>
+        <textarea id="shipping_address" name="shipping_address" rows="4" cols="50" required
+                  style="width: 100%; padding: 8px; margin-top: 5px;"></textarea>
+    </p>
+    
+    <p>
+        <button type="submit" 
+                style="background-color: #4CAF50; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+            Подтвердить заказ
+        </button>
+    </p>
+</form>
+
+<p>
+    <a href="{% url 'cart' %}" style="color: #2196F3;">← Вернуться в корзину</a>
+</p>
