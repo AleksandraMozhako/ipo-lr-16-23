@@ -30,4 +30,10 @@ urlpatterns = [
     path('api/cart/add/', views.api_add_to_cart, name='api_add_to_cart'),
     
     path('api/', include(router.urls)),
+    
+    path('register/', views.register_view, name='register'),
+    path('cabinet/', views.cabinet_view, name='cabinet'),
+    path('settings/', views.settings_view, name='settings'),
+    
+    path('api/me/', views.api_me, name='api_me'),
 ]

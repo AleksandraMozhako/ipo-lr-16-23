@@ -3,6 +3,9 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
+from django.contrib.auth import authenticate, login, update_session_auth_hash
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
+from django.contrib.auth.models import Group
 from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import Font
@@ -12,6 +15,7 @@ from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from rest_framework import permissions, viewsets
+from .permissions import IsAdminGroupOrReadOnly
 from .serializers import (
     CartItemSerializer,
     CartSerializer,
@@ -20,9 +24,11 @@ from .serializers import (
     OrderItemSerializer,
     OrderSerializer,
     ProductSerializer,
+    ProfileSerializer,
+    ProfileUpdateSerializer,
 )
 
-from .models import Product, Category, Manufacturer, Cart, CartItem, Order, OrderItem
+from .models import Product, Category, Manufacturer, Cart, CartItem, Order, OrderItem, Profile
 
 
 @ensure_csrf_cookie
@@ -42,6 +48,82 @@ def author_view(request):
 def about_view(request):
     return render(request, 'shop/about.html')
 
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            group, _ = Group.objects.get_or_create(name='Покупатель')
+            user.groups.add(group)
+            Profile.objects.get_or_create(user=user)
+            login(request, user)
+            messages.success(request, 'Регистрация прошла успешно. Добро пожаловать!')
+            return redirect('cabinet')
+    else:
+        form = UserCreationForm()
+
+    return render(request, 'registration/register.html', {'form': form})
+
+
+@login_required
+def cabinet_view(request):
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    orders = Order.objects.filter(user=request.user).prefetch_related('items').order_by('-created_at')
+    categories = Category.objects.all()
+    return render(request, 'shop/cabinet.html', {
+        'profile': profile,
+        'orders': orders,
+        'categories': categories,
+    })
+
+
+@login_required
+def settings_view(request):
+    password_form = PasswordChangeForm(request.user)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'password':
+            password_form = PasswordChangeForm(request.user, request.POST)
+            if password_form.is_valid():
+                password_form.save()
+                update_session_auth_hash(request, password_form.user)
+                messages.success(request, 'Пароль успешно изменён.')
+                return redirect('settings')
+            else:
+                messages.error(request, 'Исправьте ошибки в форме.')
+
+        elif action == 'email':
+            new_email = request.POST.get('email', '').strip()
+            if new_email:
+                request.user.email = new_email
+                request.user.save(update_fields=['email'])
+                messages.success(request, 'Email успешно обновлён.')
+            else:
+                messages.error(request, 'Введите корректный email.')
+            return redirect('settings')
+
+    return render(request, 'shop/settings.html', {'password_form': password_form})
+
+
+@api_view(['GET', 'PATCH'])
+@permission_classes([permissions.IsAuthenticated])
+def api_me(request):
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+
+    if request.method == 'GET':
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data)
+
+    serializer = ProfileUpdateSerializer(profile, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(ProfileSerializer(profile).data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @ensure_csrf_cookie
 def product_list(request):
@@ -271,7 +353,7 @@ class ManufacturerViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.select_related("category", "manufacturer")
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminGroupOrReadOnly]
 
 
 class CartViewSet(viewsets.ModelViewSet):
