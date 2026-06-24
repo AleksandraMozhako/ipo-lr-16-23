@@ -36,9 +36,6 @@ body {
 }
 
 .hero {
-    background:
-        linear-gradient(90deg, rgba(255, 250, 246, .95), rgba(255, 250, 246, .72)),
-        url("../images/craft-hero.svg") center right / auto 100% no-repeat;
     min-height: 420px;
     display: grid;
     align-items: center;
