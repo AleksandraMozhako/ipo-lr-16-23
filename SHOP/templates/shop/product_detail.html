@@ -20,7 +20,6 @@
             <img class="img-fluid rounded product-detail-image w-100" 
                  src="{% if product.product_image %}{{ product.product_image.url }}{% else %}{% static 'images/product-placeholder.svg' %}{% endif %}" 
                  alt="{{ product.name }}" 
-                 onerror="this.src='{% static 'images/product-placeholder.svg' %}'">
         </div>
 
         <!-- Правая колонка: информация о товаре -->
